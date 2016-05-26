@@ -41,7 +41,6 @@ class DeletableResource(AttributeDict):
 
     def __init__(self, *args, **kwargs):
         self.client = kwargs.pop('client', None)
-        self.network_client = kwargs.pop('network_client', None)
         self.networks_client = kwargs.pop('networks_client', None)
         self.routers_client = kwargs.pop('routers_client', None)
         self.subnets_client = kwargs.pop('subnets_client', None)
@@ -77,7 +76,7 @@ class DeletableResource(AttributeDict):
         """Waits for a network resource to reach a status
 
         @param fetch: the callable to be used to query the resource status
-        @type fecth: callable that takes no parameters and returns the resource
+        @type fetch: callable that takes no parameters and returns the resource
         @param status: the status that the resource has to reach
         @type status: String
         """

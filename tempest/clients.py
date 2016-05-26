@@ -46,6 +46,7 @@ from tempest.lib.services.compute.images_client import ImagesClient \
 from tempest.lib.services.compute.instance_usage_audit_log_client import \
     InstanceUsagesAuditLogClient
 from tempest.lib.services.compute.interfaces_client import InterfacesClient
+from tempest.lib.services.compute.keypairs_client import KeyPairsClient
 from tempest.lib.services.compute.limits_client import LimitsClient
 from tempest.lib.services.compute.migrations_client import MigrationsClient
 from tempest.lib.services.compute.networks_client import NetworksClient \
@@ -96,7 +97,6 @@ from tempest.lib.services.network.subnets_client import SubnetsClient
 from tempest import manager
 from tempest.services.baremetal.v1.json.baremetal_client import \
     BaremetalClient
-from tempest.services.compute.json.keypairs_client import KeyPairsClient
 from tempest.services.data_processing.v1_1.data_processing_client import \
     DataProcessingClient
 from tempest.services.database.json.flavors_client import \
@@ -131,17 +131,14 @@ from tempest.services.identity.v3.json.trusts_client import TrustsClient
 from tempest.services.identity.v3.json.users_clients import \
     UsersClient as UsersV3Client
 from tempest.services.image.v1.json.images_client import ImagesClient
-from tempest.services.image.v2.json.images_client import ImagesClientV2
-from tempest.services.network.json.network_client import NetworkClient
+from tempest.services.image.v2.json.images_client import \
+    ImagesClient as ImagesV2Client
 from tempest.services.network.json.routers_client import RoutersClient
 from tempest.services.object_storage.account_client import AccountClient
 from tempest.services.object_storage.container_client import ContainerClient
 from tempest.services.object_storage.object_client import ObjectClient
 from tempest.services.orchestration.json.orchestration_client import \
     OrchestrationClient
-from tempest.services.telemetry.json.alarming_client import AlarmingClient
-from tempest.services.telemetry.json.telemetry_client import \
-    TelemetryClient
 from tempest.services.volume.v1.json.admin.hosts_client import \
     HostsClient as VolumeHostsClient
 from tempest.services.volume.v1.json.admin.quotas_client import \
@@ -201,14 +198,15 @@ class Manager(manager.Manager):
     }
     default_params_with_timeout_values.update(default_params)
 
-    def __init__(self, credentials, service=None):
+    def __init__(self, credentials, service=None, scope='project'):
         """Initialization of Manager class.
 
         Setup all services clients and make them available for tests cases.
         :param credentials: type Credentials or TestResources
         :param service: Service name
+        :param scope: default scope for tokens produced by the auth provider
         """
-        super(Manager, self).__init__(credentials=credentials)
+        super(Manager, self).__init__(credentials=credentials, scope=scope)
         self._set_compute_clients()
         self._set_database_clients()
         self._set_identity_clients()
@@ -230,14 +228,6 @@ class Manager(manager.Manager):
             build_timeout=CONF.network.build_timeout,
             **self.default_params)
         self.network_extensions_client = NetworkExtensionsClient(
-            self.auth_provider,
-            CONF.network.catalog_type,
-            CONF.network.region or CONF.identity.region,
-            endpoint_type=CONF.network.endpoint_type,
-            build_interval=CONF.network.build_interval,
-            build_timeout=CONF.network.build_timeout,
-            **self.default_params)
-        self.network_client = NetworkClient(
             self.auth_provider,
             CONF.network.catalog_type,
             CONF.network.region or CONF.identity.region,
@@ -333,20 +323,6 @@ class Manager(manager.Manager):
             build_interval=CONF.network.build_interval,
             build_timeout=CONF.network.build_timeout,
             **self.default_params)
-        if CONF.service_available.ceilometer:
-            self.telemetry_client = TelemetryClient(
-                self.auth_provider,
-                CONF.telemetry.catalog_type,
-                CONF.identity.region,
-                endpoint_type=CONF.telemetry.endpoint_type,
-                **self.default_params_with_timeout_values)
-        if CONF.service_available.aodh:
-            self.alarming_client = AlarmingClient(
-                self.auth_provider,
-                CONF.alarming.catalog_type,
-                CONF.identity.region,
-                endpoint_type=CONF.alarming.endpoint_type,
-                **self.default_params_with_timeout_values)
         if CONF.service_available.glance:
             self.image_client = ImagesClient(
                 self.auth_provider,
@@ -356,7 +332,7 @@ class Manager(manager.Manager):
                 build_interval=CONF.image.build_interval,
                 build_timeout=CONF.image.build_timeout,
                 **self.default_params)
-            self.image_client_v2 = ImagesClientV2(
+            self.image_client_v2 = ImagesV2Client(
                 self.auth_provider,
                 CONF.image.catalog_type,
                 CONF.image.region or CONF.identity.region,

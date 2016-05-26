@@ -46,16 +46,11 @@ class ConfigFixture(conf_fixture.Config):
             lock_path=str(os.environ.get('OS_TEST_LOCK_PATH')),
         )
         self.conf.set_default('auth_version', 'v2', group='identity')
-        for config_option in ['username', 'password', 'tenant_name']:
+        for config_option in ['username', 'password', 'project_name']:
             # Identity group items
-            for prefix in ['', 'alt_', 'admin_']:
-                if prefix == 'admin_':
-                    group = 'auth'
-                else:
-                    group = 'identity'
-                self.conf.set_default(prefix + config_option,
-                                      'fake_' + config_option,
-                                      group=group)
+            self.conf.set_default('admin_' + config_option,
+                                  'fake_' + config_option,
+                                  group='auth')
 
 
 class FakePrivate(config.TempestConfigPrivate):
